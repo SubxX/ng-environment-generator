@@ -26,30 +26,37 @@ const getBrowserTarget = (projectName: string, envName: string) => `${projectNam
 
 export const updateConfigurationForBUILDCommand = (config: any, envName: string) => {
     const build = config.architect.build;
+    const env = build.configurations[envName];
 
-    if (build?.configurations && build?.configurations[envName])
-        throw new Error(`Environment configuration exists for 'ng build' ~ ${envName}`);
+    const pattern = new RegExp(`.*${envName}.*`);
+    const isExist = env?.fileReplacements?.some((r: any) => r?.replace?.match(pattern) || r?.with?.match(pattern))
 
-    // TODO : Handle for existing environments
+
+    if (env && isExist)
+        throw new Error(`Environment configuration exists for 'build' ~ ${envName}`);
+
+    // File replacements array
+    const fileReplacements = [
+        ...(env?.fileReplacements ?? []),
+        {
+            "replace": "src/environments/environment.ts",
+            "with": `src/environments/environment.${envName}.ts`
+        }
+    ]
 
     // Build configuration
-    build.configurations = {
-        ...(build.configurations ?? {}),
-        [envName]: {
-            fileReplacements: [
-                {
-                    "replace": "src/environments/environment.ts",
-                    "with": `src/environments/environment.${envName}.ts`
-                }
-            ]
-        }
+    build.configurations[envName] = {
+        ...(env ?? {}),
+        fileReplacements
     }
 }
 
 export const updateConfigurationForSERVECommand = (config: any, envName: string, projectName: string) => {
     const serve = config.architect.serve;
-    if (serve?.configurations && serve?.configurations[envName])
-        throw new Error(`Environment configuration exists for 'ng serve' ~ ${envName}`)
+    if (serve?.configurations && serve?.configurations[envName]) {
+        console.log(`Environment - '${envName}' configuration exists for 'serve' ~ SKIPPING...`)
+        return
+    }
 
     // Serve configuration
     serve.configurations = {
@@ -61,17 +68,18 @@ export const updateConfigurationForSERVECommand = (config: any, envName: string,
 }
 
 export const updateConfigurationForE2ECommand = (config: any, envName: string, projectName: string) => {
-    const e2e = config.architect.e2e
-    if (e2e && e2e?.configurations && e2e?.configurations[envName])
-        throw new Error(`Environment configuration exists for 'ng e2e ${projectName}' ~ ${envName}`)
+    const e2e = config?.architect?.e2e
+
+    if (e2e?.configurations && e2e?.configurations[envName]) {
+        console.log(`Environment - '${envName}' Configuration exists for 'e2e' SIPPING...`);
+        return;
+    }
 
     // e2e configuration
-    if (e2e) {
-        e2e.configurations = {
-            ...(e2e.configurations ?? {}),
-            [envName]: {
-                "devServerTarget": getBrowserTarget(projectName, envName)
-            }
+    e2e.configurations = {
+        ...(e2e.configurations ?? {}),
+        [envName]: {
+            "devServerTarget": getBrowserTarget(projectName, envName)
         }
     }
 }
