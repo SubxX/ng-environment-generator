@@ -1,7 +1,3 @@
-Sure, here's a sample README file for your package "ng-envornment-generator":
-
----
-
 # ng-environment-generator
 
 ## Introduction
