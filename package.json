@@ -7,7 +7,12 @@
     "build": "npx tsc",
     "watch": "npx tsc -watch"
   },
-  "keywords": [],
+  "keywords": [
+    "cli",
+    "npmtool"
+  ],
+  "repository": "https://github.com/SubxX/ng-environment-generator",
+  "homepage": "https://github.com/SubxX/ng-environment-generator#readme",
   "author": "Subham",
   "license": "ISC",
   "devDependencies": {
