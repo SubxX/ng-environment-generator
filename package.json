@@ -14,10 +14,10 @@
     "@types/node": "^20.4.9",
     "typescript": "^5.1.6"
   },
-  "dependencies": {
-    "commander": "^11.0.0"
-  },
   "bin": {
     "ng-env": "./dist/index.js"
+  },
+  "dependencies": {
+    "cac": "^6.7.14"
   }
 }
