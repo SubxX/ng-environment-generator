@@ -9,7 +9,10 @@
   },
   "keywords": [
     "cli",
-    "npmtool"
+    "ng",
+    "angular",
+    "front-end",
+    "environment"
   ],
   "repository": "https://github.com/SubxX/ng-environment-generator",
   "homepage": "https://github.com/SubxX/ng-environment-generator#readme",
