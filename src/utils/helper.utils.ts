@@ -1,7 +1,7 @@
 import { execSync } from "node:child_process";
 import path from "node:path";
 import { existsSync, writeFileSync } from "node:fs";
-import { readJSONFile } from "./file.helper";
+import { readJSONFile, writeJSONFile } from "./file.helper";
 
 /**
  * @input options {[key]: value}
@@ -99,4 +99,34 @@ export const createEnvironmentFiles = async (envName: string) => {
     }
     await Promise.allSettled(promises)
     return true
+}
+
+export const updateScripts = async (envName: string, filePath: string) => {
+    const isScriptExists = await existsSync(filePath)
+    if (!isScriptExists) throw new Error(`Unable to find package.json`);
+
+    const packageJson = await readJSONFile(path.join(process.cwd(), `package.json`));
+    const scripts = packageJson?.scripts ?? {};
+
+    const buildCommand = `build:${envName}`;
+    const serveCommand = `serve:${envName}`;
+
+    // Updating build command
+    if (scripts[buildCommand]) {
+        console.log(`Build command exist for environment ${envName} SKIPPING...`)
+    } else {
+        scripts[buildCommand] = 'ng build --configuration=staging'
+    }
+
+    // Updating script command
+    if (scripts[serveCommand]) {
+        console.log(`Serve command exist for environment ${envName} SKIPPING...`)
+    } else {
+        scripts[serveCommand] = 'ng serve --configuration=staging'
+    }
+
+    packageJson['scripts'] = scripts
+
+    // Updating script
+    writeJSONFile(filePath, packageJson)
 }

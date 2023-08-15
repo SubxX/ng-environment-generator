@@ -10,7 +10,8 @@ import {
   getAngularConfiguration,
   updateConfigurationForBUILDCommand,
   updateConfigurationForE2ECommand,
-  updateConfigurationForSERVECommand
+  updateConfigurationForSERVECommand,
+  updateScripts
 } from './utils/helper.utils';
 import { writeJSONFile } from './utils/file.helper';
 
@@ -53,6 +54,9 @@ cli
 
       // Finally writing back the updated configuration
       await writeJSONFile(path.resolve(process.cwd(), 'angular.json'), config)
+
+      // Updating package json scripts
+      if (script) await updateScripts(envName, path.resolve(process.cwd(), `package.json`));
 
       console.log(`Setup for Environment ~ ${envName} successfully done.`);
       console.log('Thanks for using ng-env');
