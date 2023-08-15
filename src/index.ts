@@ -1,62 +1,67 @@
 #! /usr/bin/env node
 
-import { cac } from 'cac'
 import path from 'node:path';
-import { ErrorMessages } from './constants/error-messages';
-import { isEnvironmentNameValid, isOptionsBoolean } from './utils/validation.utils'
+import { program } from 'commander'
+import { environmentNameChecker, booleanChecker } from './utils/validation.utils'
 import {
   createEnvironmentFiles,
   formatOptions,
   getAngularConfiguration,
+  getPackageDotJson,
   updateConfigurationForBUILDCommand,
   updateConfigurationForE2ECommand,
   updateConfigurationForSERVECommand,
-  updateScripts
+  updateConfigurationsForScripts
 } from './utils/helper.utils';
 import { writeJSONFile } from './utils/file.helper';
 
-const cli = cac('ng-env')
-
-cli
+program
+  .name('ng-env')
+  .description('A simple package to generate new angular environment')
   .version("1.0.0")
-  .option("generate [value]", "Generate new environment")
-  .parse(process.argv);
+  .usage("[command] [options]")
+  .configureHelp({
+    sortSubcommands: true,
+    subcommandTerm: (cmd) => cmd.name()
+  });
 
-cli
-  .command("generate [value]", "Generate new environment")
-  .option('--project [value]', 'Specify a project in which you want to add the environment configuration (default takes the first project)')
-  .option('--script [value]', 'Add build script for this environment (default : true)', { default: true })
-  .option('--e2e [value]', 'Add proper configuration for e2e as well (default : false)', { default: false })
+program
+  .command('generate')
+  .description('Generate a new environment')
+  .argument('<string>', 'Name of the environment', environmentNameChecker)
+  .option('--project <string>', 'Specify a project in which you want to add the environment configuration (default takes the first project)')
+  .option('--script <boolean>', 'Add build script for this environment (default : true)', booleanChecker, true)
+  .option('--e2e <boolean>', 'Add proper configuration for e2e as well (default : false)', booleanChecker, false)
   .action(async (envName, options) => {
     try {
       const { script, e2e, project } = formatOptions(options)
 
-      if (!isOptionsBoolean({ script, e2e }))
-        throw new Error(ErrorMessages.INVALID_FLAG_VALUES)
-
-      if (!isEnvironmentNameValid(envName))
-        throw new Error(ErrorMessages.INVALID_ENVIRONMENT_NAME)
-
       // Getting angular config
-      const config = await getAngularConfiguration();
+      const ngConfig = await getAngularConfiguration();
+      const packageJsoConfig = await getPackageDotJson()
 
       // Updating project configuration
-      const projectName = project ?? Object.keys(config?.projects)[0] // defaults to first 1
-      const projectConfig = config?.projects[projectName];
-      if (!projectConfig) throw new Error(ErrorMessages.NO_PROJECT_CONFIG(projectName));
+      const projectName = project ?? Object.keys(ngConfig?.projects)[0] // defaults to first 1
+      const projectConfig = ngConfig?.projects[projectName];
+      if (!projectConfig) throw new Error(`No project configuration found ~ ${projectName ?? 'N/A'}`);
 
       updateConfigurationForBUILDCommand(projectConfig, envName)
       updateConfigurationForSERVECommand(projectConfig, envName, projectName)
       if (e2e) updateConfigurationForE2ECommand(projectConfig, envName, projectName)
+      // TODO Add tests and other configurations
 
-      // Creating environment files
-      await createEnvironmentFiles(envName);
-
-      // Finally writing back the updated configuration
-      await writeJSONFile(path.resolve(process.cwd(), 'angular.json'), config)
+      const tasks = [
+        createEnvironmentFiles(envName), // Creating environment files
+        writeJSONFile(path.resolve(process.cwd(), 'angular.json'), ngConfig), // Writing back the updated ng configuration
+      ]
 
       // Updating package json scripts
-      if (script) await updateScripts(envName, path.resolve(process.cwd(), `package.json`));
+      if (script) {
+        updateConfigurationsForScripts(envName, packageJsoConfig);
+        tasks.push(writeJSONFile(path.resolve(process.cwd(), 'package.json'), packageJsoConfig))
+      }
+
+      await Promise.all(tasks)
 
       console.log(`Setup for Environment ~ ${envName} successfully done.`);
       console.log('Thanks for using ng-env');
@@ -66,12 +71,5 @@ cli
     }
   })
 
-cli.on('command:*', () => {
-  console.error('Invalid command: %s', cli.args.join(' '))
-  cli.outputHelp()
-  process.exit(1)
-})
-
-
-cli.help()
-cli.parse()
+program.showHelpAfterError('add --help for additional information)');
+program.parse()

@@ -22,6 +22,11 @@ export async function getAngularConfiguration() {
     return ngConfig;
 }
 
+export async function getPackageDotJson() {
+    const packageJson = await readJSONFile(path.resolve(process.cwd(), 'package.json'));
+    return packageJson;
+}
+
 const getBrowserTarget = (projectName: string, envName: string) => `${projectName}:build:${envName}`
 
 export const updateConfigurationForBUILDCommand = (config: any, envName: string) => {
@@ -101,11 +106,7 @@ export const createEnvironmentFiles = async (envName: string) => {
     return true
 }
 
-export const updateScripts = async (envName: string, filePath: string) => {
-    const isScriptExists = await existsSync(filePath)
-    if (!isScriptExists) throw new Error(`Unable to find package.json`);
-
-    const packageJson = await readJSONFile(path.join(process.cwd(), `package.json`));
+export const updateConfigurationsForScripts = (envName: string, packageJson: Record<string, any>) => {
     const scripts = packageJson?.scripts ?? {};
 
     const buildCommand = `build:${envName}`;
@@ -117,16 +118,11 @@ export const updateScripts = async (envName: string, filePath: string) => {
     } else {
         scripts[buildCommand] = 'ng build --configuration=staging'
     }
-
     // Updating script command
     if (scripts[serveCommand]) {
         console.log(`Serve command exist for environment ${envName} SKIPPING...`)
     } else {
         scripts[serveCommand] = 'ng serve --configuration=staging'
     }
-
     packageJson['scripts'] = scripts
-
-    // Updating script
-    writeJSONFile(filePath, packageJson)
 }
