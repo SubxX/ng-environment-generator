@@ -36,6 +36,8 @@ Replace `[environment-name]` with the name of the environment you want to genera
 
 - `--project ProjectName`: Specify the name of the Angular project for which you want to generate the environment (it take the first project as default if no projectName is passed).
 
+- `--script false`: Include this option to also add build and serve script to the package.json file (true by default).
+
 - `--e2e true`: Include this option to also add configuration for end-to-end (e2e) testing.
 
 ## Example

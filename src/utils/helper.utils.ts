@@ -17,9 +17,15 @@ export const formatOptions = (options: Record<string, any>) => {
 }
 
 export async function getAngularConfiguration() {
-    await execSync('ng config');
-    const ngConfig = await readJSONFile(path.resolve(process.cwd(), 'angular.json'));
-    return ngConfig;
+    try {
+        const ngConfig = await readJSONFile(path.resolve(process.cwd(), 'angular.json'));
+        return ngConfig;
+    } catch (error: any) {
+        const msg = error?.code === 'ENOENT' ?
+            "No angular configuration found are you sure its an angular project/workspace ?" :
+            error?.message
+        throw new Error(msg)
+    }
 }
 
 export async function getPackageDotJson() {
@@ -31,11 +37,13 @@ const getBrowserTarget = (projectName: string, envName: string) => `${projectNam
 
 export const updateConfigurationForBUILDCommand = (config: any, envName: string) => {
     const build = config.architect.build;
-    const env = build.configurations[envName];
+    if (!build || !build?.configurations) {
+        throw new Error(`No Build configuration found for this project it must exist!`);
+    }
 
+    const env = build.configurations[envName];
     const pattern = new RegExp(`.*${envName}.*`);
     const isExist = env?.fileReplacements?.some((r: any) => r?.replace?.match(pattern) || r?.with?.match(pattern))
-
 
     if (env && isExist)
         throw new Error(`Environment configuration exists for 'build' ~ ${envName}`);
@@ -57,15 +65,18 @@ export const updateConfigurationForBUILDCommand = (config: any, envName: string)
 }
 
 export const updateConfigurationForSERVECommand = (config: any, envName: string, projectName: string) => {
-    const serve = config.architect.serve;
-    if (serve?.configurations && serve?.configurations[envName]) {
+    const serve = config?.architect?.serve;
+    if (!serve || !serve?.configurations)
+        throw new Error(`No Serve configuration found for this project it must exist!`);
+
+    if (serve?.configurations[envName]) {
         console.log(`Environment - '${envName}' configuration exists for 'serve' ~ SKIPPING...`)
         return
     }
 
     // Serve configuration
     serve.configurations = {
-        ...(serve.configurations ?? {}),
+        ...(serve?.configurations ?? {}),
         [envName]: {
             "browserTarget": getBrowserTarget(projectName, envName)
         }
@@ -74,7 +85,10 @@ export const updateConfigurationForSERVECommand = (config: any, envName: string,
 
 export const updateConfigurationForE2ECommand = (config: any, envName: string, projectName: string) => {
     const e2e = config?.architect?.e2e
-
+    if (!e2e) {
+        console.log(`No E2E configuration found for this project! SKIPPING...`)
+        return
+    }
     if (e2e?.configurations && e2e?.configurations[envName]) {
         console.log(`Environment - '${envName}' Configuration exists for 'e2e' SIPPING...`);
         return;
@@ -82,7 +96,7 @@ export const updateConfigurationForE2ECommand = (config: any, envName: string, p
 
     // e2e configuration
     e2e.configurations = {
-        ...(e2e.configurations ?? {}),
+        ...(e2e?.configurations ?? {}),
         [envName]: {
             "devServerTarget": getBrowserTarget(projectName, envName)
         }
