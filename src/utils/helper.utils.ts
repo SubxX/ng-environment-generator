@@ -1,20 +1,6 @@
-import { execSync } from "node:child_process";
 import path from "node:path";
 import { existsSync, writeFileSync } from "node:fs";
-import { readJSONFile, writeJSONFile } from "./file.helper";
-
-/**
- * @input options {[key]: value}
- * @purpose converts 'true' & 'false' to its appropriate boolean value true & false
- * @returns converted options
- */
-export const formatOptions = (options: Record<string, any>) => {
-    Object.keys(options).forEach(key => {
-        if (options[key] === 'true') options[key] = true
-        if (options[key] === 'false') options[key] = false
-    })
-    return options
-}
+import { readJSONFile, writeJSONFile } from "./file.utils";
 
 export async function getAngularConfiguration() {
     try {
@@ -29,11 +15,14 @@ export async function getAngularConfiguration() {
 }
 
 export async function getPackageDotJson() {
-    const packageJson = await readJSONFile(path.resolve(process.cwd(), 'package.json'));
-    return packageJson;
+    try {
+        const packageJson = await readJSONFile(path.resolve(process.cwd(), 'package.json'));
+        return packageJson;
+    } catch (error: any) {
+        const msg = error?.code === 'ENOENT' ? "Unable to find package.json" : error?.message
+        throw new Error(msg)
+    }
 }
-
-const getBrowserTarget = (projectName: string, envName: string) => `${projectName}:build:${envName}`
 
 export const updateConfigurationForBUILDCommand = (config: any, envName: string) => {
     const build = config.architect.build;
@@ -48,7 +37,7 @@ export const updateConfigurationForBUILDCommand = (config: any, envName: string)
     if (env && isExist)
         throw new Error(`Environment configuration exists for 'build' ~ ${envName}`);
 
-    // File replacements array
+    // Extending fileReplacements array
     const fileReplacements = [
         ...(env?.fileReplacements ?? []),
         {
@@ -78,18 +67,18 @@ export const updateConfigurationForSERVECommand = (config: any, envName: string,
     serve.configurations = {
         ...(serve?.configurations ?? {}),
         [envName]: {
-            "browserTarget": getBrowserTarget(projectName, envName)
+            "browserTarget": `${projectName}:build:${envName}`
         }
     }
 }
 
 export const updateConfigurationForE2ECommand = (config: any, envName: string, projectName: string) => {
     const e2e = config?.architect?.e2e
-    if (!e2e) {
+    if (!e2e || !e2e?.configurations) {
         console.log(`No E2E configuration found for this project! SKIPPING...`)
         return
     }
-    if (e2e?.configurations && e2e?.configurations[envName]) {
+    if (e2e?.configurations[envName]) {
         console.log(`Environment - '${envName}' Configuration exists for 'e2e' SIPPING...`);
         return;
     }
@@ -98,7 +87,7 @@ export const updateConfigurationForE2ECommand = (config: any, envName: string, p
     e2e.configurations = {
         ...(e2e?.configurations ?? {}),
         [envName]: {
-            "devServerTarget": getBrowserTarget(projectName, envName)
+            "devServerTarget": `${projectName}:serve:${envName}`
         }
     }
 }
@@ -132,7 +121,7 @@ export const updateConfigurationsForScripts = (envName: string, packageJson: Rec
     } else {
         scripts[buildCommand] = 'ng build --configuration=staging'
     }
-    // Updating script command
+    // Updating serve command
     if (scripts[serveCommand]) {
         console.log(`Serve command exist for environment ${envName} SKIPPING...`)
     } else {

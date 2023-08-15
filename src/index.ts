@@ -5,7 +5,6 @@ import { program } from 'commander'
 import { environmentNameChecker, booleanChecker } from './utils/validation.utils'
 import {
   createEnvironmentFiles,
-  formatOptions,
   getAngularConfiguration,
   getPackageDotJson,
   updateConfigurationForBUILDCommand,
@@ -13,7 +12,7 @@ import {
   updateConfigurationForSERVECommand,
   updateConfigurationsForScripts
 } from './utils/helper.utils';
-import { writeJSONFile } from './utils/file.helper';
+import { writeJSONFile } from './utils/file.utils';
 
 program
   .name('ng-env')
@@ -34,7 +33,7 @@ program
   .option('--e2e <boolean>', 'Add proper configuration for e2e as well (default : false)', booleanChecker, false)
   .action(async (envName, options) => {
     try {
-      const { script, e2e, project } = formatOptions(options)
+      const { script, e2e, project } = options;
 
       // Getting angular config
       const ngConfig = await getAngularConfiguration();
