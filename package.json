@@ -1,6 +1,6 @@
 {
   "name": "ng-environment-generator",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "A simple package to generate new angular environments",
   "main": "dist/index.js",
   "scripts": {
@@ -27,7 +27,6 @@
     "ng-env": "./dist/index.js"
   },
   "dependencies": {
-    "commander": "^11.0.0",
-    "ng-environment-generator": "^1.0.4"
+    "commander": "^11.0.0"
   }
 }
