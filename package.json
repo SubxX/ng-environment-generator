@@ -1,11 +1,12 @@
 {
   "name": "ng-environment-generator",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "A simple package to generate new angular environments",
   "main": "dist/index.js",
   "scripts": {
-    "build": "npx tsc",
-    "watch": "npx tsc -watch"
+    "build": "tsup",
+    "watch": "tsup --watch",
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "cli",
@@ -20,12 +21,14 @@
   "license": "ISC",
   "devDependencies": {
     "@types/node": "^20.4.9",
+    "tsup": "^7.2.0",
     "typescript": "^5.1.6"
   },
   "bin": {
     "ng-env": "./dist/index.js"
   },
   "dependencies": {
-    "commander": "^11.0.0"
+    "commander": "^11.0.0",
+    "ng-environment-generator": "^1.0.4"
   }
 }
