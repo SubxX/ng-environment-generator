@@ -119,13 +119,13 @@ export const updateConfigurationsForScripts = (envName: string, packageJson: Rec
     if (scripts[buildCommand]) {
         console.log(`Build command exist for environment ${envName} SKIPPING...`)
     } else {
-        scripts[buildCommand] = 'ng build --configuration=staging'
+        scripts[buildCommand] = `ng build --configuration=${envName}`
     }
     // Updating serve command
     if (scripts[serveCommand]) {
         console.log(`Serve command exist for environment ${envName} SKIPPING...`)
     } else {
-        scripts[serveCommand] = 'ng serve --configuration=staging'
+        scripts[serveCommand] = `ng serve --configuration=${envName}`
     }
     packageJson['scripts'] = scripts
 }
