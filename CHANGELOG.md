@@ -1,4 +1,8 @@
-# 1.1.0 (2023-08-26)
+## [1.1.1](https://github.com/SubxX/ng-environment-generator/compare/v1.1.0...v1.1.1) (2023-08-26)
+
+
+
+# [1.1.0](https://github.com/SubxX/ng-environment-generator/compare/4697b04b6e59a0d0077849af7faecffa9b99d2c0...v1.1.0) (2023-08-26)
 
 
 ### Bug Fixes
