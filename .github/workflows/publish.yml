@@ -1,0 +1,31 @@
+name: "Publish package to npm"
+
+on:
+  workflow_run:
+    workflows: ["Release"]
+    types: [completed]
+    branches:
+      - "main"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 16
+          registry-url: https://registry.npmjs.org
+
+      - name: install dependencies
+        run: npm ci
+
+      - name: run build
+        run: npm run build
+
+      - name: publish
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_AUTH_TOKEN}}
